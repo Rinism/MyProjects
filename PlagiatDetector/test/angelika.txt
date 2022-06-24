@@ -1,0 +1,230 @@
+//Andzelika Bureka :)
+#include <iostream>
+#include<fstream>
+#include<string>
+#include<vector>
+#include <sstream>
+#include <iomanip>
+#include <regex>
+using namespace std;
+ifstream ifile;
+ofstream ofile;
+
+struct Celojums {
+  public:
+    string stop1;
+    string stop2;
+    string wday;
+    string time;
+    string price;
+};
+
+void task1(vector<Celojums> &celojums) {
+  cout<<"result:" << endl;
+    string stop1;
+    getline (cin,stop1);
+    string stop2;
+    getline (cin,stop2);
+    for (auto n : celojums)
+        if (n.stop1 == stop1 && n.stop2 == stop2){
+          cout<< fixed << setprecision(2);
+            cout  << n.stop1<<" " << n.stop2 <<
+            " " << n.wday << " " << n.time << " " <<  n.price<< endl;
+        }
+}
+void task2(vector<Celojums> &celojums) {
+  cout<<"result:" << endl;
+    string wday;
+    getline (cin,wday);
+    for (auto n : celojums)
+        if (n.wday == wday){
+          cout<< fixed << setprecision(2);
+            cout << n.stop1<<" " << n.stop2 <<
+            " " << n.wday << " " << n.time << " " << n.price<< endl;
+        }
+}
+void task3(vector<Celojums> &celojums) {
+  cout<<"result:" << endl;
+    string price;
+    getline (cin,price);
+    for (auto n : celojums)
+        if (std::stod(price) >= std::stod(n.price)){
+          cout<< fixed << setprecision(2);
+            cout  << n.stop1<<" " << n.stop2 <<
+            " " << n.wday << " " << n.time << " " << n.price<< endl;
+        }
+}
+void task4(string &err_txt) {
+  cout<<"result:" << endl;
+    ifile.open (err_txt);
+    string line;
+    while(getline(ifile, line)){
+      if(isalpha(line[0]))
+        cout << line << endl;
+    }
+    ifile.close();
+}
+
+bool WordValidity (const std::string & str) {
+for (auto ch : str) //check if contains letters only
+  if (!( (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')))
+    return false;
+return true;
+}
+
+bool PriceValidity(string str){
+    try { //check if price is double
+        std::stod(str);
+    } catch(...){
+         return false;}
+    //check cent validity
+    string delimiter = ".";
+    string e = str.substr(0, str.find(delimiter));
+    string c = str.substr(e.size()+delimiter.size(), str.size());
+    double c_double = std::stod(c);
+    if(c_double<=99 && c_double>=0)
+        return true;
+    else return false;
+
+return false;
+}
+
+bool TimeValidity(string str){
+    string delimiter = ":";
+    string h = str.substr(0, str.find(delimiter));
+    string m = str.substr(h.size()+delimiter.size(), str.size());
+    //check hours
+    if(std::stod(h)<=24 && std::stod(h)>=0)
+        return true;
+    else return false;
+    //check minutes
+    if(std::stod(m)<=59 && std::stod(m)>=0)
+        return true;
+    else return false;
+    //check ":"
+    if((str.substr(h.size(), 3)).substr(0,1).find(":") != string::npos)
+        return true;
+
+return false;
+}
+
+bool DayValidity (string str){
+    bool res = false;
+    string line = "Pr,Ot,Tr,Ce,Pt,Se,Sv";
+    string token, delimiter = ",";
+    size_t pos = 0;
+    //check day validity 
+    while ((pos = line.find(delimiter)) != std::string::npos) {
+       token = line.substr(0, pos);
+       if(str.compare(token) != 0){
+          res = false;
+          line.erase(0, pos + delimiter.length());
+       } else {
+         return true;
+         break;
+       }
+    }
+return false;   
+}
+
+int DataCountValidity(string &line){ 
+    int count = 0;
+    for (int i=0; i<line.size(); i++) 
+      if (line[i] == ',') count++;
+return count;
+}
+
+void unnecessarySpaceRemove(string &line){ 
+  line.erase(remove(line.begin(), line.end(), '\r'), line.end());
+  line.erase(remove(line.begin(), line.end(), ' '), line.end());
+}
+
+void ReadFileData(string &db_csv, string &err_txt, vector<Celojums> &celojums) {
+  ifile.open(db_csv);
+  ofile.open(err_txt);
+
+  string stop1, stop2, wday, time, price;
+  string line, token, delimiter = ",";
+
+  Celojums c;
+
+  while (getline (ifile, line)) {
+    unnecessarySpaceRemove(line);
+    string originalline = line;
+    //check count of data
+    if(DataCountValidity(line) != 4) {
+      ofile << originalline << endl;
+      continue;
+    }
+    //check first stop
+    token = line.substr(0, line.find(delimiter));
+    if(WordValidity(token)){
+    c.stop1 = token;
+    line.erase(0, token.size() + delimiter.length());
+    } else {
+      ofile << originalline << endl;
+      continue;
+     }   
+    //check second stop
+    token = line.substr(0, line.find(delimiter));
+    if(WordValidity(token)){
+      c.stop2 = token;
+      line.erase(0, token.size() + delimiter.length());
+    } else {
+      ofile << originalline << endl;
+      continue;
+     }
+    //check day of the week
+    token = line.substr(0, line.find(delimiter));
+    if(DayValidity(token)){
+    c.wday = token;
+    line.erase(0, token.size() + delimiter.length());
+    } else {
+      ofile << originalline << endl;
+      continue;
+     }
+    //check time
+    token = line.substr(0, line.find(delimiter));
+    if(TimeValidity(token)){
+    c.time = token;
+    line.erase(0, token.size() + delimiter.length());
+    } else {
+      ofile << originalline << endl;
+      continue;
+     }
+    //check price
+    if(PriceValidity(line)){
+    c.price = line;
+    } else {
+      ofile << originalline << endl;
+      continue;
+     }
+    celojums.push_back(c);
+    }
+  ifile.close();
+  ofile.close();
+}
+
+int main (int argc, char **argv) {  
+    string db_csv = "db.csv";
+    string err_txt = "err.txt";
+       
+    vector<Celojums> celojums;
+    ReadFileData(db_csv, err_txt, celojums);
+
+    string c;
+    while (true) {
+      getline (cin,c);
+      if (c == "a") 
+        task1(celojums);
+      else if(c == "b") 
+        task2(celojums);
+      else if (c == "c") 
+        task3(celojums);
+      else if(c == "d") 
+        task4(err_txt);
+      else if (c == "e") 
+        break;
+    }
+  ifile.close();
+}
